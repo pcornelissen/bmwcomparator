@@ -5,7 +5,6 @@ import org.htmlcleaner.TagNode;
 import org.htmlcleaner.XPatherException;
 
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -16,15 +15,14 @@ import java.net.URLConnection;
 import java.util.*;
 
 
-@WebServlet(name = "MainServlet", urlPatterns = "/compare")
 public class MainServlet extends HttpServlet {
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		TagNode tagNode = urlToNode(request.getParameter("url"));
 		try {
 			final Object[] objects = tagNode.evaluateXPath("//h5[@class='titel']/a/@href");
-			SortedMap<String, String> alle = new TreeMap<>();
-			List<CarData> autos = new ArrayList<>();
+			SortedMap<String, String> alle = new TreeMap<String,String>();
+			List<CarData> autos = new ArrayList<CarData>();
 
 			for (Object itemUrlObj : objects) {
 				String itemUrl = "http://www.carpresenter.de" + itemUrlObj;
@@ -77,7 +75,7 @@ public class MainServlet extends HttpServlet {
 	private void extractOptionsFromData(TagNode tagNode2, CarData carData, String xPathExpression, String marker) throws XPatherException {
 		final String optionsString = extractSingleValueByXPath(tagNode2, xPathExpression);
 		String[] options = optionsString.split(",");
-		Map<String, String> optionMap = new HashMap<>();
+		Map<String, String> optionMap = new HashMap<String,String>();
 		for (String element : options) {
 			element=element.trim();
 

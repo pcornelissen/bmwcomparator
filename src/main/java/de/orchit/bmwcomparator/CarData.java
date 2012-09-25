@@ -6,7 +6,7 @@ import java.util.TreeMap;
 
 public class CarData {
 	private String name;
-	private Map<String,String> options = new TreeMap<>();
+	private Map<String,String> options = new TreeMap<String,String>();
 	private String image;
 	private String price;
 	private String link;
