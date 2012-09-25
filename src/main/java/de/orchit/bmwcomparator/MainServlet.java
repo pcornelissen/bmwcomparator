@@ -54,6 +54,9 @@ public class MainServlet extends HttpServlet {
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		if(request.getParameter("url")!=null){
+			doPost(request,response);
+		}
 		request.setAttribute("url", request.getParameter("url"));
 		request.setAttribute("hasData", false);
 		getServletContext().getRequestDispatcher("/WEB-INF/result.jsp").forward

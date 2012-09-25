@@ -8,7 +8,7 @@
     <link href="custom.css" rel="stylesheet">
 </head>
 <body>
-<form action="<c:url value="/compare"/>" method="POST" class="form-inline">
+<form action="<c:url value="/compare"/>" method="GET" class="form-inline">
     <label for="url">Adresse der Seite</label><input id="focusedInput" class="input-xxxlarge" type="text" name="url" value="${url}"/>
     <input type="submit"/>  <a href="#howto">Hinweise zur Benutzung</a>
 </form>
