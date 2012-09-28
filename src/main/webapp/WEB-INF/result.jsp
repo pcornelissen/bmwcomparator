@@ -81,7 +81,7 @@
     </table>
 </c:if>
 <a name="howto">Hinweise</a>
-<p>Um diese Übersicht benutzen zu können, müssen Sie auf <a href=="http://www.carpresenter.de">http://www.carpresenter.de</a> die gewünschten Filter auf der linken Seite vornehmen. Dann die Adresse aus der Adressleiste des Browsers kopieren und in das Eingabefeld am Anfang dieser Seite eingeben und den Knopf betätigen.</p>
+<p>Um diese Übersicht benutzen zu können, müssen Sie auf <a href="http://www.carpresenter.de" target="_blank">http://www.carpresenter.de</a> die gewünschten Filter auf der linken Seite vornehmen. Dann die Adresse aus der Adressleiste des Browsers kopieren und in das Eingabefeld am Anfang dieser Seite eingeben und den Knopf betätigen.</p>
 <p>Danach kann man die Übersicht genießen und es lassen sich überflüssige Zeilen oder Spalten per Papierkorb Symbol entfernen. Diese können nur durch Betätigen des Absenden Knopfes erneut angezeigt werden. (Kein Rückgängig vorhanden!)</p>
 <script src="jquery.js" type="text/javascript"></script>
 <script src="custom.js" type="text/javascript"></script>

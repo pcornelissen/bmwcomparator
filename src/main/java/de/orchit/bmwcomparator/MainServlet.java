@@ -13,49 +13,80 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MainServlet extends HttpServlet {
 
+	public static final Pattern PATTERN = Pattern.compile(".*seite=([0-9]+).*");
+
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		TagNode tagNode = urlToNode(request.getParameter("url"));
+		final TreeMap<String, String> alle = new TreeMap<String, String>();
+		final ArrayList<CarData> autos = new ArrayList<CarData>();
+		String url = request.getParameter("url");
+		final TagNode tagNode = urlToNode(url);
+
 		try {
-			final Object[] objects = tagNode.evaluateXPath("//h5[@class='titel']/a/@href");
-			SortedMap<String, String> alle = new TreeMap<String,String>();
-			List<CarData> autos = new ArrayList<CarData>();
+			int pageCount = processPage(request, tagNode, alle, autos);
+			if (pageCount > 1) {
+				final int startIndex;
+				if (url.contains("seite=")) {
+					Matcher m = PATTERN.matcher(url);
 
-			for (Object itemUrlObj : objects) {
-				String itemUrl = "http://www.carpresenter.de" + itemUrlObj;
-				TagNode tagNode2 = urlToNode(itemUrl);
-				CarData carData = new CarData();
-				carData.setLink(itemUrl);
-				carData.setName(extractSingleValueByXPath(tagNode2, "//title/text()"));
-				carData.setImage(extractSingleValueByXPath(tagNode2, "//div[@id='detailbild-container-1']/a/img/@src"));
-				carData.setPrice(extractSingleValueByXPath(tagNode2, "//tr[td/strong='Angebotspreis']/td[2]/text()"));
-				carData.setSoldOn(extractSingleValueByXPath(tagNode2, "//tr[td/text()='Erstzulassung']/td[2]/text()"));
-				carData.setColor(extractSingleValueByXPath(tagNode2, "//tr[td/text()='Farbe']/td[2]/text()"));
-				carData.setKm(extractSingleValueByXPath(tagNode2, "//tr[td/text()='KM-Stand']/td[2]/text()"));
+					if (m.find()) {
+						startIndex = Integer.valueOf(m.group(1)) + 1;
+					} else startIndex = 2;
 
-				extractOptions(tagNode2, carData);
-				autos.add(carData);
-				alle.putAll(carData.getOptions());
+				} else startIndex = 2;
+				url=url.replaceAll("&seite=([0-9]+)","");
+				pageCount = Math.min(startIndex + 2, pageCount);
+				for (int page = startIndex; pageCount >= page; page++) {
+					final TagNode tagNode2 = urlToNode(url + "&seite=" + page);
+					processPage(request, tagNode2, alle, autos);
+				}
 			}
-			request.setAttribute("hasData", autos.size()>0);
-			request.setAttribute("alle", alle);
-			request.setAttribute("autos", autos);
-
 		} catch (XPatherException e) {
 			throw new ServletException(e);
 		}
 
-		request.setAttribute("url", request.getParameter("url"));
+		request.setAttribute("hasData", autos.size() > 0);
+		request.setAttribute("alle", alle);
+		request.setAttribute("autos", autos);
+		request.setAttribute("url", url);
 		getServletContext().getRequestDispatcher("/WEB-INF/result.jsp").forward
 				(request, response);
 	}
 
+	private int processPage(HttpServletRequest request, TagNode tagNode, SortedMap<String, String> alle, List<CarData> autos) throws XPatherException, IOException {
+		final Object[] objects = tagNode.evaluateXPath("//h5[@class='titel']/a/@href");
+
+		for (Object itemUrlObj : objects) {
+			String itemUrl = "http://www.carpresenter.de" + itemUrlObj;
+			TagNode tagNode2 = urlToNode(itemUrl);
+			CarData carData = new CarData();
+			carData.setLink(itemUrl);
+			carData.setName(extractSingleValueByXPath(tagNode2, "//title/text()"));
+			carData.setImage(extractSingleValueByXPath(tagNode2, "//div[@id='detailbild-container-1']/a/img/@src"));
+			carData.setPrice(extractSingleValueByXPath(tagNode2, "//tr[td/strong='Angebotspreis']/td[2]/text()"));
+			carData.setSoldOn(extractSingleValueByXPath(tagNode2, "//tr[td/text()='Erstzulassung']/td[2]/text()"));
+			carData.setColor(extractSingleValueByXPath(tagNode2, "//tr[td/text()='Farbe']/td[2]/text()"));
+			carData.setKm(extractSingleValueByXPath(tagNode2, "//tr[td/text()='KM-Stand']/td[2]/text()"));
+
+			extractOptions(tagNode2, carData);
+			autos.add(carData);
+			alle.putAll(carData.getOptions());
+		}
+		String lastPageUrl = extractSingleValueByXPath(tagNode, "//a[@class='blaettern-letzte']/@href");
+		if (lastPageUrl == null) return 0;
+		lastPageUrl = lastPageUrl.substring(lastPageUrl.lastIndexOf("=") + 1);
+		return Integer.valueOf(lastPageUrl);
+	}
+
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		if(request.getParameter("url")!=null){
-			doPost(request,response);
+		if (request.getParameter("url") != null) {
+			doPost(request, response);
+			return;
 		}
 		request.setAttribute("url", request.getParameter("url"));
 		request.setAttribute("hasData", false);
@@ -64,10 +95,10 @@ public class MainServlet extends HttpServlet {
 	}
 
 	private TagNode urlToNode(String urlStr) throws IOException {
-		URL url= new URL(urlStr);
+		URL url = new URL(urlStr);
 		URLConnection uCon = url.openConnection();
 		InputStream is = uCon.getInputStream();
-		return new HtmlCleaner().clean(is,"iso-8859-1");
+		return new HtmlCleaner().clean(is, "iso-8859-1");
 	}
 
 	private void extractOptions(TagNode tagNode2, CarData carData) throws XPatherException {
@@ -78,11 +109,11 @@ public class MainServlet extends HttpServlet {
 	private void extractOptionsFromData(TagNode tagNode2, CarData carData, String xPathExpression, String marker) throws XPatherException {
 		final String optionsString = extractSingleValueByXPath(tagNode2, xPathExpression);
 		String[] options = optionsString.split(",");
-		Map<String, String> optionMap = new HashMap<String,String>();
+		Map<String, String> optionMap = new HashMap<String, String>();
 		for (String element : options) {
-			element=element.trim();
+			element = element.trim();
 
-			if(element.startsWith("Ehemalige"))break;
+			if (element.startsWith("Ehemalige")) break;
 			optionMap.put(element, marker);
 		}
 		carData.getOptions().putAll(optionMap);
